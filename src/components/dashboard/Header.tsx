@@ -1,6 +1,14 @@
-import { RefreshCw, Cloud } from 'lucide-react';
+import { RefreshCw, Cloud, MoreVertical, AlertTriangle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
   onRefresh: () => void;
@@ -8,6 +16,7 @@ interface HeaderProps {
 
 export const Header = ({ onRefresh }: HeaderProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -30,16 +39,37 @@ export const Header = ({ onRefresh }: HeaderProps) => {
           </p>
         </div>
       </div>
-      <Button
-        variant="dashboard"
-        size="lg"
-        onClick={handleRefresh}
-        disabled={isRefreshing}
-        className="gap-2"
-      >
-        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="dashboard"
+          size="lg"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="hover:bg-muted">
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => navigate('/alerts')} className="cursor-pointer">
+              <AlertTriangle className="w-4 h-4 mr-2 text-critical" />
+              High Resource Alerts
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 };

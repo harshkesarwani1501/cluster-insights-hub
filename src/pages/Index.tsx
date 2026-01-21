@@ -3,9 +3,8 @@ import { Header } from '@/components/dashboard/Header';
 import { FilterTabs } from '@/components/dashboard/FilterTabs';
 import { ClusterCard } from '@/components/dashboard/ClusterCard';
 import { ClusterTable } from '@/components/dashboard/ClusterTable';
-import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { StatsBar } from '@/components/dashboard/StatsBar';
-import { mockClusters, mockAlerts } from '@/data/mockData';
+import { mockClusters } from '@/data/mockData';
 import { FilterOption, ClusterData } from '@/types/cluster';
 import { toast } from 'sonner';
 
@@ -21,17 +20,9 @@ const Index = () => {
   });
 
   const handleRefresh = async () => {
-    // Simulate data refresh
     await new Promise((resolve) => setTimeout(resolve, 1000));
     toast.success('Data refreshed successfully', {
       description: 'All cluster metrics have been updated.',
-    });
-  };
-
-  const handleAlertRefresh = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    toast.success('Alerts refreshed', {
-      description: 'Resource usage data updated.',
     });
   };
 
@@ -58,8 +49,6 @@ const Index = () => {
             ))}
           </div>
         )}
-
-        <AlertsPanel alerts={mockAlerts} onRefresh={handleAlertRefresh} />
       </main>
     </div>
   );
