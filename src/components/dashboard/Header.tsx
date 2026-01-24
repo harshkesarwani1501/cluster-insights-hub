@@ -49,6 +49,16 @@ export const Header = ({ onRefresh, activePlatform }: HeaderProps) => {
       </div>
       
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/alerts')}
+          className="gap-2 border-critical/50 text-critical hover:bg-critical/10"
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Alerts
+        </Button>
+        
         <ThemeToggle />
         
         <Button
@@ -68,7 +78,7 @@ export const Header = ({ onRefresh, activePlatform }: HeaderProps) => {
               <MoreVertical className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 bg-popover">
             <DropdownMenuItem onClick={() => navigate('/alerts')} className="cursor-pointer">
               <AlertTriangle className="w-4 h-4 mr-2 text-critical" />
               High Resource Alerts
