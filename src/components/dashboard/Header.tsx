@@ -1,7 +1,9 @@
-import { RefreshCw, Cloud, MoreVertical, AlertTriangle, Settings } from 'lucide-react';
+import { RefreshCw, MoreVertical, AlertTriangle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { PlatformType } from '@/types/cluster';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +14,10 @@ import {
 
 interface HeaderProps {
   onRefresh: () => void;
+  activePlatform: PlatformType;
 }
 
-export const Header = ({ onRefresh }: HeaderProps) => {
+export const Header = ({ onRefresh, activePlatform }: HeaderProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
@@ -24,31 +27,39 @@ export const Header = ({ onRefresh }: HeaderProps) => {
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
+  const platformLabel = activePlatform === 'K8s' ? 'Kubernetes' : 'Azure Kubernetes Service';
+  const platformShort = activePlatform === 'K8s' ? 'K8s' : 'AKS';
+
   return (
-    <header className="flex items-center justify-between py-6 px-8 border-b border-border">
+    <header className="flex items-center justify-between py-4 px-6 border-b border-border bg-card/50">
       <div className="flex items-center gap-4">
-        <div className="p-3 rounded-xl bg-primary/10 glow-primary">
-          <Cloud className="w-8 h-8 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Kubernetes <span className="text-gradient">Dashboard</span>
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Real-time cluster monitoring & management
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <span className="text-2xl font-bold text-primary">{platformShort}</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              {platformLabel} <span className="text-gradient">Dashboard</span>
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Real-time cluster monitoring & management
+            </p>
+          </div>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        
         <Button
-          variant="dashboard"
-          size="lg"
+          variant="outline"
+          size="sm"
           onClick={handleRefresh}
           disabled={isRefreshing}
           className="gap-2"
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
         </Button>
         
         <DropdownMenu>
