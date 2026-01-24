@@ -1,112 +1,84 @@
-import { ResourceAlert } from '@/types/cluster';
-import { AlertTriangle, Cpu, MemoryStick, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { mockAlerts } from '@/data/mockData';
+import { Cpu, HardDrive, AlertTriangle, Server, Cloud } from 'lucide-react';
 
-interface AlertsPanelProps {
-  alerts: ResourceAlert[];
-  onRefresh: () => void;
-}
+export const AlertsPanel = () => {
+  const alerts = mockAlerts;
 
-export const AlertsPanel = ({ alerts, onRefresh }: AlertsPanelProps) => {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await onRefresh();
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
+  if (alerts.length === 0) {
+    return (
+      <div className="glass-card p-8 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
+          <AlertTriangle className="w-8 h-8 text-success" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">All Systems Healthy</h3>
+        <p className="text-muted-foreground">No high resource usage detected across all clusters.</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="flex items-center justify-end mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="gap-2"
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh Alerts
-        </Button>
-      </div>
-
-      {alerts.length === 0 ? (
-        <div className="glass-card p-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/20 mb-4">
-            <span className="text-3xl">✓</span>
-          </div>
-          <h3 className="text-lg font-semibold text-success mb-2">All Systems Healthy</h3>
-          <p className="text-muted-foreground">No high resource usage detected across clusters</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {alerts.map((alert) => (
-            <div
-              key={alert.cluster}
-              className="glass-card p-5 border-l-4 border-l-critical"
-            >
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-critical" />
-                {alert.cluster}
-              </h3>
-
-              {alert.cpu.length > 0 && (
-                <div className="mb-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <Cpu className="w-4 h-4" />
-                    CPU Alerts
-                  </div>
-                  <div className="space-y-2">
-                    {alert.cpu.map((item) => (
-                      <div
-                        key={item.node}
-                        className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
-                      >
-                        <span className="text-sm mono">{item.node}</span>
-                        <span
-                          className={`text-sm font-semibold ${
-                            item.usage >= 90 ? 'text-critical' : 'text-warning'
-                          }`}
-                        >
-                          {item.usage}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {alert.memory.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <MemoryStick className="w-4 h-4" />
-                    Memory Alerts
-                  </div>
-                  <div className="space-y-2">
-                    {alert.memory.map((item) => (
-                      <div
-                        key={item.node}
-                        className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
-                      >
-                        <span className="text-sm mono">{item.node}</span>
-                        <span
-                          className={`text-sm font-semibold ${
-                            item.usage >= 90 ? 'text-critical' : 'text-warning'
-                          }`}
-                        >
-                          {item.usage}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {alerts.map((alert) => (
+        <div key={alert.cluster} className="glass-card p-5 border-l-4 border-critical">
+          <div className="flex items-center gap-3 mb-4">
+            {alert.platform === 'AKS' ? (
+              <Cloud className="w-5 h-5 text-primary" />
+            ) : (
+              <Server className="w-5 h-5 text-primary" />
+            )}
+            <div>
+              <h3 className="font-semibold text-foreground">{alert.cluster}</h3>
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                {alert.platform}
+              </span>
             </div>
-          ))}
+          </div>
+
+          {alert.cpu.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                <Cpu className="w-3 h-3" />
+                <span className="uppercase tracking-wide font-medium">CPU Alerts</span>
+              </div>
+              <div className="space-y-1">
+                {alert.cpu.map((item) => (
+                  <div
+                    key={item.node}
+                    className="flex items-center justify-between text-sm bg-critical/10 rounded-lg px-3 py-2"
+                  >
+                    <span className="mono text-foreground text-xs">{item.node}</span>
+                    <span className={`font-bold ${item.usage >= 90 ? 'text-critical' : 'text-warning'}`}>
+                      {item.usage}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {alert.memory.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                <HardDrive className="w-3 h-3" />
+                <span className="uppercase tracking-wide font-medium">Memory Alerts</span>
+              </div>
+              <div className="space-y-1">
+                {alert.memory.map((item) => (
+                  <div
+                    key={item.node}
+                    className="flex items-center justify-between text-sm bg-critical/10 rounded-lg px-3 py-2"
+                  >
+                    <span className="mono text-foreground text-xs">{item.node}</span>
+                    <span className={`font-bold ${item.usage >= 90 ? 'text-critical' : 'text-warning'}`}>
+                      {item.usage}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 };

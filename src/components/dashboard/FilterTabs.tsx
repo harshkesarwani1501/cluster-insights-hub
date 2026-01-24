@@ -1,5 +1,5 @@
 import { FilterOption } from '@/types/cluster';
-import { LayoutGrid, Code2, TestTube2, Table2 } from 'lucide-react';
+import { LayoutGrid, Code2, TestTube2, Rocket } from 'lucide-react';
 
 interface FilterTabsProps {
   activeFilter: FilterOption;
@@ -10,23 +10,23 @@ const filters: { label: FilterOption; icon: React.ReactNode }[] = [
   { label: 'All', icon: <LayoutGrid className="w-4 h-4" /> },
   { label: 'Dev', icon: <Code2 className="w-4 h-4" /> },
   { label: 'QAS', icon: <TestTube2 className="w-4 h-4" /> },
-  { label: 'Table', icon: <Table2 className="w-4 h-4" /> },
+  { label: 'Prod', icon: <Rocket className="w-4 h-4" /> },
 ];
 
 export const FilterTabs = ({ activeFilter, onFilterChange }: FilterTabsProps) => {
   return (
-    <div className="flex gap-2 p-1 bg-secondary/50 rounded-xl w-fit">
+    <div className="flex gap-1 p-1 bg-muted rounded-lg">
       {filters.map(({ label, icon }) => (
         <button
           key={label}
           onClick={() => onFilterChange(label)}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+            flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
             transition-all duration-200
             ${
               activeFilter === label
-                ? 'bg-primary text-primary-foreground shadow-lg glow-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
             }
           `}
         >
