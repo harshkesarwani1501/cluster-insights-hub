@@ -77,28 +77,28 @@
   }
 
   .dark {
-    --background: 222 47% 6%;
+    --background: 222 30% 14%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 10%;
+    --card: 222 30% 18%;
     --card-foreground: 210 40% 98%;
-    --card-border: 222 30% 18%;
+    --card-border: 222 25% 28%;
     --card-glow: 173 80% 40%;
 
-    --popover: 222 47% 10%;
+    --popover: 222 30% 18%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 173 80% 40%;
     --primary-foreground: 222 47% 6%;
     --primary-glow: 173 80% 50%;
 
-    --secondary: 222 30% 15%;
+    --secondary: 222 25% 22%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 30% 18%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 222 25% 24%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 173 60% 30%;
+    --accent: 173 50% 35%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 72% 51%;
@@ -116,32 +116,32 @@
     --attention: 25 95% 53%;
     --attention-foreground: 222 47% 6%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 15%;
+    --border: 222 25% 28%;
+    --input: 222 25% 22%;
     --ring: 173 80% 40%;
 
-    --sidebar-background: 222 47% 8%;
+    --sidebar-background: 222 30% 16%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 173 80% 40%;
     --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 15%;
+    --sidebar-accent: 222 25% 22%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 30% 18%;
+    --sidebar-border: 222 25% 28%;
     --sidebar-ring: 173 80% 40%;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(173 80% 40%), hsl(190 80% 45%));
-    --gradient-card: linear-gradient(145deg, hsl(222 47% 11%), hsl(222 47% 8%));
-    --gradient-header: linear-gradient(90deg, hsl(222 47% 6%), hsl(222 47% 10%));
+    --gradient-card: linear-gradient(145deg, hsl(222 30% 20%), hsl(222 30% 16%));
+    --gradient-header: linear-gradient(90deg, hsl(222 30% 14%), hsl(222 30% 18%));
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 60% 45%));
     --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(45 93% 47%));
     --gradient-critical: linear-gradient(135deg, hsl(0 72% 51%), hsl(0 65% 58%));
     --gradient-attention: linear-gradient(135deg, hsl(25 95% 53%), hsl(32 98% 50%));
 
     /* Table row alternating colors */
-    --table-row-even: 222 30% 12%;
-    --table-row-odd: 222 47% 10%;
-    --table-header: 222 30% 15%;
+    --table-row-even: 222 25% 20%;
+    --table-row-odd: 222 30% 18%;
+    --table-header: 222 25% 24%;
   }
 }
 
