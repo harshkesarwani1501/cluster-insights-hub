@@ -1,5 +1,5 @@
 import { ClusterData } from '@/types/cluster';
-import { Download, Search, AlertTriangle } from 'lucide-react';
+import { Download, Search, AlertTriangle, Cpu, HardDrive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
@@ -21,11 +21,28 @@ const statusStyles: Record<ClusterData['status'], string> = {
   Critical: 'status-critical',
 };
 
-const getAllocationColor = (value: number) => {
-  if (value >= 90) return 'text-critical font-semibold';
-  if (value >= 75) return 'text-warning font-semibold';
+const getUtilColor = (value: number) => {
+  if (value >= 100) return 'text-critical font-bold';
+  if (value >= 80) return 'text-warning font-semibold';
   if (value >= 60) return 'text-attention';
   return 'text-success';
+};
+
+// Format memory for display (e.g., "224649Mi" -> "219Gi")
+const formatMemory = (mem: string): string => {
+  const match = mem.match(/^(\d+)(Mi|Gi|Ki)?$/);
+  if (!match) return mem;
+  
+  const value = parseInt(match[1], 10);
+  const unit = match[2] || 'Mi';
+  
+  if (unit === 'Mi' && value >= 1024) {
+    return `${Math.round(value / 1024)}Gi`;
+  }
+  if (unit === 'Ki' && value >= 1024 * 1024) {
+    return `${Math.round(value / (1024 * 1024))}Gi`;
+  }
+  return mem;
 };
 
 export const ClusterTable = ({ clusters }: ClusterTableProps) => {
@@ -34,45 +51,49 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
   const filteredClusters = clusters.filter(
     (c) =>
       c.cluster.toLowerCase().includes(search.toLowerCase()) ||
-      c.host.toLowerCase().includes(search.toLowerCase())
+      c.environment.toLowerCase().includes(search.toLowerCase())
   );
 
   const exportCSV = () => {
     const headers = [
       'Platform',
       'Cluster',
-      'Host',
+      'Environment',
       'Version',
       'Workers',
-      'Cordoned',
+      'Cordoned Nodes',
       'Namespaces',
       'Services',
       'Deployments',
-      'HPA Count',
-      'Running Pods',
-      'Max Pods',
+      'HPA',
+      'Used Pods',
+      'Pod Capacity',
       'Utilization %',
-      'CPU Allocation %',
-      'Memory Allocation %',
+      'CPU Allocated',
+      'Memory Allocated',
       'Status',
+      'High Usage CPU Nodes',
+      'High Usage Memory Nodes',
     ];
     const rows = filteredClusters.map((c) => [
       c.platform,
       c.cluster,
-      c.host,
+      c.environment,
       c.version,
       c.workerNodes,
-      c.cordonedNodes,
+      c.cordonedNodes.length > 0 ? c.cordonedNodes.join('; ') : 'None',
       c.namespaces,
       c.services,
       c.deployments,
       c.hpaCount,
-      c.runningPods,
-      c.maxPods,
+      c.usedPods,
+      c.podCapacity,
       c.utilPercent,
-      c.cpuAllocation,
-      c.memAllocation,
+      c.cpuAllocated,
+      c.memAllocated,
       c.status,
+      c.highUsageNodes.cpu.map(n => `${n.node}:${n.usage}%`).join('; ') || 'None',
+      c.highUsageNodes.memory.map(n => `${n.node}:${n.usage}%`).join('; ') || 'None',
     ]);
     const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -87,33 +108,27 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
   const totals = filteredClusters.reduce(
     (acc, c) => ({
       workerNodes: acc.workerNodes + c.workerNodes,
-      cordonedNodes: acc.cordonedNodes + c.cordonedNodes,
       namespaces: acc.namespaces + c.namespaces,
       services: acc.services + c.services,
       deployments: acc.deployments + c.deployments,
       hpaCount: acc.hpaCount + c.hpaCount,
-      runningPods: acc.runningPods + c.runningPods,
-      maxPods: acc.maxPods + c.maxPods,
-      cpuAllocation: acc.cpuAllocation + c.cpuAllocation,
-      memAllocation: acc.memAllocation + c.memAllocation,
+      usedPods: acc.usedPods + c.usedPods,
+      podCapacity: acc.podCapacity + c.podCapacity,
+      cpuAllocated: acc.cpuAllocated + c.cpuAllocated,
     }),
     {
       workerNodes: 0,
-      cordonedNodes: 0,
       namespaces: 0,
       services: 0,
       deployments: 0,
       hpaCount: 0,
-      runningPods: 0,
-      maxPods: 0,
-      cpuAllocation: 0,
-      memAllocation: 0,
+      usedPods: 0,
+      podCapacity: 0,
+      cpuAllocated: 0,
     }
   );
 
-  const avgCpuAllocation = filteredClusters.length > 0 ? Math.round(totals.cpuAllocation / filteredClusters.length) : 0;
-  const avgMemAllocation = filteredClusters.length > 0 ? Math.round(totals.memAllocation / filteredClusters.length) : 0;
-  const avgUtilPercent = totals.maxPods > 0 ? Math.round((totals.runningPods / totals.maxPods) * 100) : 0;
+  const avgUtilPercent = totals.podCapacity > 0 ? Math.round((totals.usedPods / totals.podCapacity) * 100) : 0;
 
   return (
     <div className="glass-card overflow-hidden">
@@ -144,80 +159,147 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
         <table className="data-table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[18%]">Cluster</th>
+              <th className="w-[14%]">Cluster</th>
+              <th className="w-[5%] text-center">Env</th>
               <th className="w-[7%] text-center">Ver</th>
-              <th className="w-[5%] text-center">Wrk</th>
-              <th className="w-[5%] text-center">NS</th>
-              <th className="w-[5%] text-center">Svc</th>
-              <th className="w-[5%] text-center">Dply</th>
-              <th className="w-[5%] text-center">HPA</th>
-              <th className="w-[10%] text-center">Pods</th>
-              <th className="w-[6%] text-center">Util</th>
-              <th className="w-[6%] text-center">CPU</th>
+              <th className="w-[4%] text-center">Wrk</th>
+              <th className="w-[4%] text-center">NS</th>
+              <th className="w-[4%] text-center">Svc</th>
+              <th className="w-[4%] text-center">Dply</th>
+              <th className="w-[4%] text-center">HPA</th>
+              <th className="w-[9%] text-center">Pods</th>
+              <th className="w-[5%] text-center">Util</th>
+              <th className="w-[5%] text-center">CPU</th>
               <th className="w-[6%] text-center">Mem</th>
-              <th className="w-[10%] text-center">Status</th>
+              <th className="w-[9%] text-center">Alerts</th>
+              <th className="w-[8%] text-center">Status</th>
             </tr>
           </thead>
           <tbody>
-            {filteredClusters.map((cluster) => (
-              <tr key={cluster.cluster}>
-                <td className="truncate">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {cluster.cordonedNodes > 0 && (
+            {filteredClusters.map((cluster) => {
+              const hasAlerts = cluster.highUsageNodes.cpu.length > 0 || cluster.highUsageNodes.memory.length > 0;
+              const hasCordoned = cluster.cordonedNodes.length > 0;
+              
+              return (
+                <tr key={cluster.cluster}>
+                  <td className="truncate">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {hasCordoned && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <AlertTriangle className="w-3.5 h-3.5 text-warning flex-shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <div className="text-xs">
+                                <strong>Cordoned Nodes:</strong>
+                                <ul className="mt-1">
+                                  {cluster.cordonedNodes.map(n => (
+                                    <li key={n} className="mono">{n}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <span className="font-medium text-foreground text-sm truncate">{cluster.cluster}</span>
+                    </div>
+                  </td>
+                  <td className="text-center text-xs font-medium">
+                    <span className={`px-1.5 py-0.5 rounded ${
+                      cluster.environment === 'Prod' ? 'bg-critical/20 text-critical' :
+                      cluster.environment === 'QAS' ? 'bg-attention/20 text-attention' :
+                      'bg-success/20 text-success'
+                    }`}>
+                      {cluster.environment}
+                    </span>
+                  </td>
+                  <td className="mono text-xs text-muted-foreground text-center">{cluster.version}</td>
+                  <td className="text-center text-sm font-medium">{cluster.workerNodes}</td>
+                  <td className="text-center text-sm">{cluster.namespaces}</td>
+                  <td className="text-center text-sm">{cluster.services}</td>
+                  <td className="text-center text-sm">{cluster.deployments}</td>
+                  <td className="text-center text-sm font-medium">{cluster.hpaCount}</td>
+                  <td className="text-center">
+                    <span className="mono text-xs">
+                      {cluster.usedPods}
+                      <span className="text-muted-foreground">/{cluster.podCapacity}</span>
+                    </span>
+                  </td>
+                  <td className="text-center">
+                    <span className={`text-xs ${getUtilColor(cluster.utilPercent)}`}>
+                      {cluster.utilPercent}%
+                    </span>
+                  </td>
+                  <td className="text-center">
+                    <span className="text-xs font-medium text-foreground">{cluster.cpuAllocated}</span>
+                  </td>
+                  <td className="text-center">
+                    <span className="text-xs font-medium text-foreground">{formatMemory(cluster.memAllocated)}</span>
+                  </td>
+                  <td className="text-center">
+                    {hasAlerts ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
-                            <AlertTriangle className="w-3.5 h-3.5 text-warning flex-shrink-0" />
+                            <div className="flex items-center justify-center gap-1">
+                              {cluster.highUsageNodes.cpu.length > 0 && (
+                                <span className="flex items-center gap-0.5 text-critical text-xs">
+                                  <Cpu className="w-3 h-3" />
+                                  {cluster.highUsageNodes.cpu.length}
+                                </span>
+                              )}
+                              {cluster.highUsageNodes.memory.length > 0 && (
+                                <span className="flex items-center gap-0.5 text-warning text-xs">
+                                  <HardDrive className="w-3 h-3" />
+                                  {cluster.highUsageNodes.memory.length}
+                                </span>
+                              )}
+                            </div>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            {cluster.cordonedNodes} cordoned node{cluster.cordonedNodes > 1 ? 's' : ''}
+                          <TooltipContent className="max-w-xs">
+                            <div className="text-xs space-y-2">
+                              {cluster.highUsageNodes.cpu.length > 0 && (
+                                <div>
+                                  <strong className="text-critical">High CPU:</strong>
+                                  <ul className="mt-1">
+                                    {cluster.highUsageNodes.cpu.map(n => (
+                                      <li key={n.node} className="mono">{n.node}: {n.usage}%</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {cluster.highUsageNodes.memory.length > 0 && (
+                                <div>
+                                  <strong className="text-warning">High Memory:</strong>
+                                  <ul className="mt-1">
+                                    {cluster.highUsageNodes.memory.map(n => (
+                                      <li key={n.node} className="mono">{n.node}: {n.usage}%</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                    ) : (
+                      <span className="text-xs text-success">—</span>
                     )}
-                    <div className="min-w-0">
-                      <div className="font-medium text-foreground text-sm truncate">{cluster.cluster}</div>
-                      <div className="text-[10px] text-muted-foreground mono truncate">{cluster.host}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="mono text-xs text-muted-foreground text-center">{cluster.version}</td>
-                <td className="text-center text-sm font-medium">{cluster.workerNodes}</td>
-                <td className="text-center text-sm">{cluster.namespaces}</td>
-                <td className="text-center text-sm">{cluster.services}</td>
-                <td className="text-center text-sm">{cluster.deployments}</td>
-                <td className="text-center text-sm font-medium">{cluster.hpaCount}</td>
-                <td className="text-center">
-                  <span className="mono text-xs">
-                    {cluster.runningPods}
-                    <span className="text-muted-foreground">/{cluster.maxPods}</span>
-                  </span>
-                </td>
-                <td className="text-center">
-                  <span className={`text-xs ${cluster.utilPercent > 80 ? 'text-critical font-bold' : cluster.utilPercent > 50 ? 'text-attention font-medium' : 'text-success'}`}>
-                    {cluster.utilPercent}%
-                  </span>
-                </td>
-                <td className="text-center">
-                  <span className={`text-xs ${getAllocationColor(cluster.cpuAllocation)}`}>
-                    {cluster.cpuAllocation}%
-                  </span>
-                </td>
-                <td className="text-center">
-                  <span className={`text-xs ${getAllocationColor(cluster.memAllocation)}`}>
-                    {cluster.memAllocation}%
-                  </span>
-                </td>
-                <td className="text-center">
-                  <span className={`status-badge text-xs ${statusStyles[cluster.status]}`}>
-                    {cluster.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="text-center">
+                    <span className={`status-badge text-xs ${statusStyles[cluster.status]}`}>
+                      {cluster.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
             {/* TOTAL Row */}
             <tr className="bg-muted/50 border-t-2 border-border font-semibold">
-              <td className="text-foreground text-sm">TOTAL ({filteredClusters.length} clusters)</td>
+              <td className="text-foreground text-sm">TOTAL ({filteredClusters.length})</td>
+              <td className="text-center text-muted-foreground">—</td>
               <td className="text-center text-muted-foreground">—</td>
               <td className="text-center text-sm">{totals.workerNodes}</td>
               <td className="text-center text-sm">{totals.namespaces}</td>
@@ -226,25 +308,18 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
               <td className="text-center text-sm">{totals.hpaCount}</td>
               <td className="text-center">
                 <span className="mono text-xs">
-                  {totals.runningPods}
-                  <span className="text-muted-foreground">/{totals.maxPods}</span>
+                  {totals.usedPods}
+                  <span className="text-muted-foreground">/{totals.podCapacity}</span>
                 </span>
               </td>
               <td className="text-center">
-                <span className={`text-xs ${avgUtilPercent > 80 ? 'text-critical' : avgUtilPercent > 50 ? 'text-attention' : 'text-success'}`}>
+                <span className={`text-xs ${getUtilColor(avgUtilPercent)}`}>
                   {avgUtilPercent}%
                 </span>
               </td>
-              <td className="text-center">
-                <span className={`text-xs ${getAllocationColor(avgCpuAllocation)}`}>
-                  {avgCpuAllocation}%
-                </span>
-              </td>
-              <td className="text-center">
-                <span className={`text-xs ${getAllocationColor(avgMemAllocation)}`}>
-                  {avgMemAllocation}%
-                </span>
-              </td>
+              <td className="text-center text-sm">{totals.cpuAllocated}</td>
+              <td className="text-center text-muted-foreground">—</td>
+              <td className="text-center text-muted-foreground">—</td>
               <td className="text-center text-muted-foreground">—</td>
             </tr>
           </tbody>

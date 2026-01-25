@@ -7,12 +7,18 @@ interface StatsBarProps {
 
 export const StatsBar = ({ clusters }: StatsBarProps) => {
   const totalClusters = clusters.length;
-  const totalPods = clusters.reduce((acc, c) => acc + c.runningPods, 0);
-  const totalMaxPods = clusters.reduce((acc, c) => acc + c.maxPods, 0);
-  const avgUtil = totalMaxPods > 0 ? Math.round((totalPods / totalMaxPods) * 100) : 0;
-  const criticalCount = clusters.filter((c) => c.status === 'Critical' || c.status === 'Warning').length;
-  const avgCpu = clusters.length > 0 ? Math.round(clusters.reduce((acc, c) => acc + c.cpuAllocation, 0) / clusters.length) : 0;
-  const avgMem = clusters.length > 0 ? Math.round(clusters.reduce((acc, c) => acc + c.memAllocation, 0) / clusters.length) : 0;
+  const totalPods = clusters.reduce((acc, c) => acc + c.usedPods, 0);
+  const totalCapacity = clusters.reduce((acc, c) => acc + c.podCapacity, 0);
+  const avgUtil = totalCapacity > 0 ? Math.round((totalPods / totalCapacity) * 100) : 0;
+  
+  // Count clusters with high usage nodes (alerts)
+  const alertCount = clusters.filter(
+    (c) => c.highUsageNodes.cpu.length > 0 || c.highUsageNodes.memory.length > 0
+  ).length;
+  
+  // Total CPU and worker nodes
+  const totalCpu = clusters.reduce((acc, c) => acc + c.cpuAllocated, 0);
+  const totalWorkers = clusters.reduce((acc, c) => acc + c.workerNodes, 0);
 
   const stats = [
     {
@@ -22,34 +28,34 @@ export const StatsBar = ({ clusters }: StatsBarProps) => {
       color: 'text-primary',
     },
     {
-      label: 'Pods',
-      value: totalPods.toLocaleString(),
+      label: 'Workers',
+      value: totalWorkers,
       icon: <Box className="w-4 h-4" />,
       color: 'text-success',
     },
     {
-      label: 'Utilization',
-      value: `${avgUtil}%`,
+      label: 'Pods',
+      value: `${totalPods.toLocaleString()}/${totalCapacity.toLocaleString()}`,
       icon: <Activity className="w-4 h-4" />,
       color: avgUtil > 80 ? 'text-critical' : avgUtil > 50 ? 'text-attention' : 'text-success',
     },
     {
-      label: 'Avg CPU',
-      value: `${avgCpu}%`,
+      label: 'Utilization',
+      value: `${avgUtil}%`,
       icon: <Cpu className="w-4 h-4" />,
-      color: avgCpu > 80 ? 'text-critical' : avgCpu > 60 ? 'text-attention' : 'text-success',
+      color: avgUtil > 80 ? 'text-critical' : avgUtil > 60 ? 'text-attention' : 'text-success',
     },
     {
-      label: 'Avg Memory',
-      value: `${avgMem}%`,
+      label: 'Total CPU',
+      value: totalCpu,
       icon: <HardDrive className="w-4 h-4" />,
-      color: avgMem > 80 ? 'text-critical' : avgMem > 60 ? 'text-attention' : 'text-success',
+      color: 'text-primary',
     },
     {
-      label: 'Attention',
-      value: criticalCount,
+      label: 'Alerts',
+      value: alertCount,
       icon: <AlertCircle className="w-4 h-4" />,
-      color: criticalCount > 0 ? 'text-critical' : 'text-success',
+      color: alertCount > 0 ? 'text-critical' : 'text-success',
     },
   ];
 

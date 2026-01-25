@@ -29,7 +29,7 @@ export const ClusterCard = ({ cluster }: ClusterCardProps) => {
             {cluster.cluster}
           </h3>
           <p className="text-xs text-muted-foreground mono mt-1">
-            K8s v{cluster.version}
+            {cluster.version}
           </p>
         </div>
         <span className={`status-badge ${statusStyles[cluster.status]}`}>
@@ -66,7 +66,7 @@ export const ClusterCard = ({ cluster }: ClusterCardProps) => {
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Pod Utilization</span>
           <span className="font-semibold text-foreground">
-            {cluster.runningPods} / {cluster.maxPods}{' '}
+            {cluster.usedPods} / {cluster.podCapacity}{' '}
             <span className="text-muted-foreground">({cluster.utilPercent}%)</span>
           </span>
         </div>
@@ -79,11 +79,11 @@ export const ClusterCard = ({ cluster }: ClusterCardProps) => {
       </div>
 
       {/* Cordoned Warning */}
-      {cluster.cordonedNodes > 0 && (
+      {cluster.cordonedNodes.length > 0 && (
         <div className="flex items-center gap-2 mt-4 p-2 rounded-lg bg-warning/10 border border-warning/20">
           <AlertTriangle className="w-4 h-4 text-warning" />
           <span className="text-xs text-warning">
-            {cluster.cordonedNodes} cordoned node{cluster.cordonedNodes > 1 ? 's' : ''}
+            {cluster.cordonedNodes.length} cordoned node{cluster.cordonedNodes.length > 1 ? 's' : ''}
           </span>
         </div>
       )}
