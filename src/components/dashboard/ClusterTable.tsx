@@ -155,24 +155,25 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
       </div>
 
       {/* Table - compact fit */}
-      <div className="w-full">
-        <table className="data-table w-full table-fixed">
+      <div className="w-full overflow-x-auto">
+        <table className="data-table w-full table-fixed min-w-[1200px]">
           <thead>
             <tr>
-              <th className="w-[14%]">Cluster</th>
-              <th className="w-[5%] text-center">Env</th>
-              <th className="w-[7%] text-center">Ver</th>
-              <th className="w-[4%] text-center">Wrk</th>
-              <th className="w-[4%] text-center">NS</th>
-              <th className="w-[4%] text-center">Svc</th>
-              <th className="w-[4%] text-center">Dply</th>
-              <th className="w-[4%] text-center">HPA</th>
-              <th className="w-[9%] text-center">Pods</th>
-              <th className="w-[5%] text-center">Util</th>
-              <th className="w-[5%] text-center">CPU</th>
-              <th className="w-[6%] text-center">Mem</th>
-              <th className="w-[9%] text-center">Alerts</th>
-              <th className="w-[8%] text-center">Status</th>
+              <th className="w-[11%]">Cluster</th>
+              <th className="w-[4%] text-center">Env</th>
+              <th className="w-[6%] text-center">Ver</th>
+              <th className="w-[3%] text-center">Wrk</th>
+              <th className="w-[3%] text-center">NS</th>
+              <th className="w-[3%] text-center">Svc</th>
+              <th className="w-[3%] text-center">Dply</th>
+              <th className="w-[3%] text-center">HPA</th>
+              <th className="w-[7%] text-center">Pods</th>
+              <th className="w-[4%] text-center">Util</th>
+              <th className="w-[4%] text-center">CPU</th>
+              <th className="w-[5%] text-center">Mem</th>
+              <th className="w-[12%]">Cordon Nodes</th>
+              <th className="w-[18%]">Alerts</th>
+              <th className="w-[6%] text-center">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -183,28 +184,7 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
               return (
                 <tr key={cluster.cluster}>
                   <td className="truncate">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {hasCordoned && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <AlertTriangle className="w-3.5 h-3.5 text-warning flex-shrink-0" />
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <div className="text-xs">
-                                <strong>Cordoned Nodes:</strong>
-                                <ul className="mt-1">
-                                  {cluster.cordonedNodes.map(n => (
-                                    <li key={n} className="mono">{n}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                      <span className="font-medium text-foreground text-sm truncate">{cluster.cluster}</span>
-                    </div>
+                    <span className="font-medium text-foreground text-sm truncate">{cluster.cluster}</span>
                   </td>
                   <td className="text-center text-xs font-medium">
                     <span className={`px-1.5 py-0.5 rounded ${
@@ -238,54 +218,41 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
                   <td className="text-center">
                     <span className="text-xs font-medium text-foreground">{formatMemory(cluster.memAllocated)}</span>
                   </td>
-                  <td className="text-center">
-                    {hasAlerts ? (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className="flex items-center justify-center gap-1">
-                              {cluster.highUsageNodes.cpu.length > 0 && (
-                                <span className="flex items-center gap-0.5 text-critical text-xs">
-                                  <Cpu className="w-3 h-3" />
-                                  {cluster.highUsageNodes.cpu.length}
-                                </span>
-                              )}
-                              {cluster.highUsageNodes.memory.length > 0 && (
-                                <span className="flex items-center gap-0.5 text-warning text-xs">
-                                  <HardDrive className="w-3 h-3" />
-                                  {cluster.highUsageNodes.memory.length}
-                                </span>
-                              )}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <div className="text-xs space-y-2">
-                              {cluster.highUsageNodes.cpu.length > 0 && (
-                                <div>
-                                  <strong className="text-critical">High CPU:</strong>
-                                  <ul className="mt-1">
-                                    {cluster.highUsageNodes.cpu.map(n => (
-                                      <li key={n.node} className="mono">{n.node}: {n.usage}%</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {cluster.highUsageNodes.memory.length > 0 && (
-                                <div>
-                                  <strong className="text-warning">High Memory:</strong>
-                                  <ul className="mt-1">
-                                    {cluster.highUsageNodes.memory.map(n => (
-                                      <li key={n.node} className="mono">{n.node}: {n.usage}%</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                  {/* Cordon Nodes Column */}
+                  <td className="text-xs">
+                    {hasCordoned ? (
+                      <div className="flex items-start gap-1">
+                        <AlertTriangle className="w-3 h-3 text-warning flex-shrink-0 mt-0.5" />
+                        <span className="mono text-warning truncate" title={cluster.cordonedNodes.join(', ')}>
+                          {cluster.cordonedNodes.length <= 2 
+                            ? cluster.cordonedNodes.join(', ')
+                            : `${cluster.cordonedNodes.slice(0, 2).join(', ')} +${cluster.cordonedNodes.length - 2}`
+                          }
+                        </span>
+                      </div>
                     ) : (
-                      <span className="text-xs text-success">—</span>
+                      <span className="text-muted-foreground">None</span>
+                    )}
+                  </td>
+                  {/* Alerts Column - Show details inline */}
+                  <td className="text-xs">
+                    {hasAlerts ? (
+                      <div className="space-y-0.5">
+                        {cluster.highUsageNodes.cpu.map(n => (
+                          <div key={`cpu-${n.node}`} className="flex items-center gap-1 text-critical">
+                            <Cpu className="w-3 h-3 flex-shrink-0" />
+                            <span className="mono truncate" title={n.node}>{n.node}: {n.usage}%</span>
+                          </div>
+                        ))}
+                        {cluster.highUsageNodes.memory.map(n => (
+                          <div key={`mem-${n.node}`} className="flex items-center gap-1 text-warning">
+                            <HardDrive className="w-3 h-3 flex-shrink-0" />
+                            <span className="mono truncate" title={n.node}>{n.node}: {n.usage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-success">—</span>
                     )}
                   </td>
                   <td className="text-center">
@@ -319,7 +286,8 @@ export const ClusterTable = ({ clusters }: ClusterTableProps) => {
               </td>
               <td className="text-center text-sm">{totals.cpuAllocated}</td>
               <td className="text-center text-muted-foreground">—</td>
-              <td className="text-center text-muted-foreground">—</td>
+              <td className="text-muted-foreground">—</td>
+              <td className="text-muted-foreground">—</td>
               <td className="text-center text-muted-foreground">—</td>
             </tr>
           </tbody>
