@@ -22,10 +22,7 @@ const Index = () => {
   // Then filter by environment
   const filteredClusters = platformClusters.filter((c) => {
     if (activeFilter === 'All') return true;
-    if (activeFilter === 'Dev') return c.cluster.toLowerCase().includes('dev');
-    if (activeFilter === 'QAS') return c.cluster.toLowerCase().includes('qas');
-    if (activeFilter === 'Prod') return c.cluster.toLowerCase().includes('prod');
-    return true;
+    return c.environment === activeFilter;
   });
 
   const handleRefresh = async () => {
